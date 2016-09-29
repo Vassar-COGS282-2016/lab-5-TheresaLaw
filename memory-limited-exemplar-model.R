@@ -34,7 +34,12 @@
 sample.training.data <- data.frame(x=c(0.5,0.6), y=c(0.4,0.3), category=c(1,2))
 
 exemplar.memory.limited <- function(training.data, x.val, y.val, target.category, sensitivity, decay.rate){
-  return(NA)
+  training.data$trial.number <- seq(1:(nrow(training.data)-1))
+  training.data$weight <-sapply(training.data$trial.number, function(trial.number){
+    1*decay.rate^(nrow(training.data)-training.data[i])})
+  
+  distance <-(x.val-training.data)
+
 }
 
 # Once you have the model implemented, write the log-likelihood function for a set of data.
