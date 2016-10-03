@@ -34,9 +34,9 @@
 sample.training.data <- data.frame(x=c(0.5,0.6), y=c(0.4,0.3), category=c(1,2))
 
 exemplar.memory.limited <- function(training.data, x.val, y.val, target.category, sensitivity, decay.rate){
-  training.data$trial.number <- seq(1:(nrow(training.data)-1))
+  training.data$trial.number <- seq(1:(nrow(training.data)))
   training.data$weight <-sapply(training.data$trial.number, function(trial.number){
-    1*decay.rate^(nrow(training.data)-training.data[i])})
+    1*decay.rate^(nrow(training.data)-training.data)})
   
   distance <- mapply(function(x,y){
     return(sqrt(sensitivity*(x-x.val)^2 + (1-sensitivity)*(y-y.val)^2 ))
@@ -67,6 +67,11 @@ exemplar.memory.limited <- function(training.data, x.val, y.val, target.category
 sample.data.set <- data.frame(x=c(0.5,0.6,0.4,0.5,0.3), y=c(0.4,0.3,0.6,0.4,0.5), 
                               category=c(1,2,2,1,2), correct=c(T,F,F,T,F))
 
+exemplar.memory.limited(sample.data.set, sample.data.set$x, sample.data.set$y,
+                        1, 0.5, 0.8)
+
+dbinom(sample.data.set, 5, exemplar.memory.limited(sample.data.set, sample.data.set$x, sample.data.set$y,
+                                                   sample.data.set$category, ))
 # In our hypothetical experiment, we are training and testing at the same time. This is important
 # for a model like this, because the model depends on the order in which examples are shown.
 # It also means that you have to do a little work to separate the training and test data for each trial.
