@@ -38,14 +38,34 @@ exemplar.memory.limited <- function(training.data, x.val, y.val, target.category
   training.data$weight <-sapply(training.data$trial.number, function(trial.number){
     1*decay.rate^(nrow(training.data)-training.data[i])})
   
-  distance <-(x.val-training.data)
-
+  distance <- mapply(function(x,y){
+    return(sqrt(sensitivity*(x-x.val)^2 + (1-sensitivity)*(y-y.val)^2 ))
+  }, training.data$x.val, training.data$y.val)
+  
+  similarity <- exp(-sensitivity*distance)
+  
+  memory.weighted.similarity <- sapply(training.data$weight, function(similarity){
+    similarity*training.data$weight})
+  
+  probability.target.category <- mapply(function(category, sim){
+    total.similarity<-0
+    sum.target.similarity<-0
+    if(category == target.category){
+      total.similarity = total.similarity+sim
+      sum.target.similarity = sum.target.similarity + sim
+    } else{
+      total.similarity = total.similarity+sim
+    }
+  }, target.category, memory.weighted.similarity)
+  
+  return(probability.target.category)
 }
 
 # Once you have the model implemented, write the log-likelihood function for a set of data.
 # The set of data for the model will look like this:
 
-sample.data.set <- data.frame(x=c(0.5,0.6,0.4,0.5,0.3), y=c(0.4,0.3,0.6,0.4,0.5), category=c(1,2,2,1,2), correct=c(T,F,F,T,F))
+sample.data.set <- data.frame(x=c(0.5,0.6,0.4,0.5,0.3), y=c(0.4,0.3,0.6,0.4,0.5), 
+                              category=c(1,2,2,1,2), correct=c(T,F,F,T,F))
 
 # In our hypothetical experiment, we are training and testing at the same time. This is important
 # for a model like this, because the model depends on the order in which examples are shown.
