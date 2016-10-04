@@ -36,16 +36,17 @@ sample.training.data <- data.frame(x=c(0.5,0.6), y=c(0.4,0.3), category=c(1,2))
 exemplar.memory.limited <- function(training.data, x.val, y.val, target.category, sensitivity, decay.rate){
   training.data$trial.number <- seq(1:(nrow(training.data)))
   training.data$weight <-sapply(training.data$trial.number, function(trial.number){
-    1*decay.rate^(nrow(training.data)-training.data)})
+    return(1*decay.rate^(nrow(training.data)-trial.number))})
   
   distance <- mapply(function(x,y){
-    return(sqrt(sensitivity*(x-x.val)^2 + (1-sensitivity)*(y-y.val)^2 ))
+    return(sqrt((x-x.val)^2 + (y-y.val)^2 ))
   }, training.data$x.val, training.data$y.val)
   
   similarity <- exp(-sensitivity*distance)
   
-  memory.weighted.similarity <- sapply(training.data$weight, function(similarity){
-    similarity*training.data$weight})
+  memory.weighted.similarity <- mapply(function(simi, weight){
+    return(simi*weight)}, similaritiy, training.data$weight)
+  ?lapply
   
   probability.target.category <- mapply(function(category, sim){
     total.similarity<-0
