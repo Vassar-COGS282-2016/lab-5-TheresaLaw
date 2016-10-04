@@ -38,17 +38,11 @@ exemplar.memory.limited <- function(training.data, x.val, y.val, target.category
   training.data$weight <-sapply(training.data$trial.number, function(trial.number){
     return(1*decay.rate^(nrow(training.data)-trial.number))})
   
-  distance <- mapply(function(x,y){
+  distance <- function(x,y){
     return(sqrt((x-x.val)^2 + (y-y.val)^2 ))
-  }, training.data$x.val, training.data$y.val)
+  }
   
-  similarity <- exp(-sensitivity*distance)
-  
-  memory.weighted.similarity <- mapply(function(simi, weight){
-    return(simi*weight)}, similaritiy, training.data$weight)
-  ?lapply
-  
-  probability.target.category <- mapply(function(category, sim){
+  probability.target.category <- function(category, sim){
     total.similarity<-0
     sum.target.similarity<-0
     if(category == target.category){
@@ -57,10 +51,35 @@ exemplar.memory.limited <- function(training.data, x.val, y.val, target.category
     } else{
       total.similarity = total.similarity+sim
     }
-  }, target.category, memory.weighted.similarity)
-  
-  return(probability.target.category)
+  return(sum.target.similarity/total.similarity)
 }
+  
+  prob <- mapply(function(category, weight, x, y){
+    return(probability.target.category(category, weight*(exp(-sensitivity*(distance(x,y))))))},
+    training.data$target.category, training.data$weight,training.data$x.val, training.data$y.val)
+  
+  return(prob)}
+
+  
+  
+ # similarity <- exp(-sensitivity*distance)
+  
+#  memory.weighted.similarity <- mapply(function(simi, weight){
+ #   return(simi*weight)}, similaritiy, training.data$weight)
+  
+  #probability.target.category <- mapply(function(category, sim){
+   # total.similarity<-0
+  #  sum.target.similarity<-0
+   # if(category == target.category){
+    #  total.similarity = total.similarity+sim
+     # sum.target.similarity = sum.target.similarity + sim
+  #  } else{
+   #   total.similarity = total.similarity+sim
+   # }
+  #}, target.category, memory.weighted.similarity)
+  
+  #return(probability.target.category)
+#}
 
 # Once you have the model implemented, write the log-likelihood function for a set of data.
 # The set of data for the model will look like this:
