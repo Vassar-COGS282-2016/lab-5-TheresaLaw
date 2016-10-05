@@ -33,33 +33,39 @@
 
 sample.training.data <- data.frame(x=c(0.5,0.6), y=c(0.4,0.3), category=c(1,2))
 
+
 exemplar.memory.limited <- function(training.data, x.val, y.val, target.category, sensitivity, decay.rate){
   training.data$trial.number <- seq(1:(nrow(training.data)))
   training.data$weight <-sapply(training.data$trial.number, function(trial.number){
     return(1*decay.rate^(nrow(training.data)-trial.number))})
   
   distance <- function(x,y){
-    return(sqrt((x-x.val)^2 + (y-y.val)^2 ))
+    return(sqrt((x-x.val)^2 + (y-y.val)^2))
   }
   
-  probability.target.category <- function(category, sim){
-    total.similarity<-0
-    sum.target.similarity<-0
-    if(category == target.category){
-      total.similarity = total.similarity+sim
-      sum.target.similarity = sum.target.similarity + sim
-    } else{
-      total.similarity = total.similarity+sim
-    }
-  return(sum.target.similarity/total.similarity)
+  training.data$similarity <- mapply(function(weight, x, y){
+    return(weight*(exp(-sensitivity*(distance(x,y)))))},
+    training.data$weight, training.data$x, training.data$y)
+  
+  return((sum(subset(training.data, category==1)$similarity) / (sum(training.data$similarity))))
 }
-  
-  prob <- mapply(function(category, weight, x, y){
-    return(probability.target.category(category, weight*(exp(-sensitivity*(distance(x,y))))))},
-    training.data$target.category, training.data$weight,training.data$x.val, training.data$y.val)
-  
-  return(prob)}
 
+ # probability.target.category <- function(category, sim){  
+  #  total.similarity<-0
+   # sum.target.similarity<-0
+    #if(category == target.category){
+     # total.similarity = total.similarity+sim
+      #sum.target.similarity = sum.target.similarity + sim
+  #  } else{
+   #   total.similarity = total.similarity+sim
+    #}
+  #  return(sum.target.similarity/total.similarity)
+  #}
+  
+  
+  #prob <- mapply(function(category,weight, x, y){
+   # return(probability.target.category(category, (weight*(exp(-sensitivity*(distance(x,y)))))))},
+    #training.data$category, training.data$weight, training.data$x , training.data$y)
   
   
  # similarity <- exp(-sensitivity*distance)
@@ -87,11 +93,20 @@ exemplar.memory.limited <- function(training.data, x.val, y.val, target.category
 sample.data.set <- data.frame(x=c(0.5,0.6,0.4,0.5,0.3), y=c(0.4,0.3,0.6,0.4,0.5), 
                               category=c(1,2,2,1,2), correct=c(T,F,F,T,F))
 
-exemplar.memory.limited(sample.data.set, sample.data.set$x, sample.data.set$y,
-                        1, 0.5, 0.8)
+sample.data.set$probability <-exemplar.memory.limited(sample.data.set, sample.data.set$x, sample.data.set$y,
+                                                       sample.data.set$category, 0.5, 0.8)
 
-dbinom(sample.data.set, 5, exemplar.memory.limited(sample.data.set, sample.data.set$x, sample.data.set$y,
-                                                   sample.data.set$category, ))
+exemplar.memory.limited$individual.likelihood <- mapply(function(prob, response){
+  if(response == T){
+    return(prob)
+  }else{
+    return(1-prob)
+  }
+}, sample.data.set$probability, sample.data.set$correct)
+
+sample.data.set$log.likelihood <- log(sample.data.set$individual.likelihood)
+sum(sample.data.set$log.likelihood)
+
 # In our hypothetical experiment, we are training and testing at the same time. This is important
 # for a model like this, because the model depends on the order in which examples are shown.
 # It also means that you have to do a little work to separate the training and test data for each trial.
