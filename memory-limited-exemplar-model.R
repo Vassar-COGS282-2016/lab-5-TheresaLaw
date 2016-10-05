@@ -93,20 +93,6 @@ exemplar.memory.limited <- function(training.data, x.val, y.val, target.category
 sample.data.set <- data.frame(x=c(0.5,0.6,0.4,0.5,0.3), y=c(0.4,0.3,0.6,0.4,0.5), 
                               category=c(1,2,2,1,2), correct=c(T,F,F,T,F))
 
-sample.data.set$probability <-exemplar.memory.limited(sample.data.set, sample.data.set$x, sample.data.set$y,
-                                                       sample.data.set$category, 0.5, 0.8)
-
-exemplar.memory.limited$individual.likelihood <- mapply(function(prob, response){
-  if(response == T){
-    return(prob)
-  }else{
-    return(1-prob)
-  }
-}, sample.data.set$probability, sample.data.set$correct)
-
-sample.data.set$log.likelihood <- log(sample.data.set$individual.likelihood)
-sum(sample.data.set$log.likelihood)
-
 # In our hypothetical experiment, we are training and testing at the same time. This is important
 # for a model like this, because the model depends on the order in which examples are shown.
 # It also means that you have to do a little work to separate the training and test data for each trial.
@@ -118,6 +104,7 @@ sample.data.set[0:3,]
 
 sample.data.set[4,]
 
+
 # So, you need to treat each row of all.data as a test item, and find the training set for it
 # to give to your model. It may be easier to do this with a for loop than mapply(), though it
 # is certainly possible with both. (For mapply, pass it the row number that you are on...)
@@ -125,5 +112,30 @@ sample.data.set[4,]
 # Don't forget that decay rate should be between 0 and 1, and that sensitivity should be > 0.
 
 exemplar.memory.log.likelihood <- function(all.data, sensitivity, decay.rate){
-  return(NA)
+  sum.log <- 0
+  for(i in all.data){
+    if(i==0){
+      sum.log = sum.log + 0
+    }else if(i==1){
+      sum.log = sum.log + log(0.5)
+    }else{
+    test.point.x <- all.data[i,]$x
+    test.point.y <- all.data[i]$y
+    training.data <- all.data[1:(i-1)]
+    cat <-all.data[i]$category
+    response <- all.data[i]$correct
+    prob<- exemplar.memory.limited(training.data, test.point.x, test.point.y, cat, 
+                                   sensitivity, decay.rate)
+    
+    individual.likelihood <- function(response, probability){
+      if(response == T){
+      return(prob)
+    }else{
+      return(1-prob)
+    }
+ }
+    sum.log = sum.log + log(individual.likelihood)
+  }}
+  return(sum.log)
 }
+exemplar.memory.log.likelihood(sample.data.set, 0.5, 0.8)
