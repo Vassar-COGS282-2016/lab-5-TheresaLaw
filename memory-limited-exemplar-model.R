@@ -47,51 +47,17 @@ exemplar.memory.limited <- function(training.data, x.val, y.val, target.category
     return(weight*(exp(-sensitivity*(distance(x,y)))))},
     training.data$weight, training.data$x, training.data$y)
   
-  return((sum(subset(training.data, category==1)$similarity) / (sum(training.data$similarity))))
+  return(sum(subset(training.data, category==target.category)$similarity) / sum(training.data$similarity))
 }
 
- # probability.target.category <- function(category, sim){  
-  #  total.similarity<-0
-   # sum.target.similarity<-0
-    #if(category == target.category){
-     # total.similarity = total.similarity+sim
-      #sum.target.similarity = sum.target.similarity + sim
-  #  } else{
-   #   total.similarity = total.similarity+sim
-    #}
-  #  return(sum.target.similarity/total.similarity)
-  #}
-  
-  
-  #prob <- mapply(function(category,weight, x, y){
-   # return(probability.target.category(category, (weight*(exp(-sensitivity*(distance(x,y)))))))},
-    #training.data$category, training.data$weight, training.data$x , training.data$y)
-  
-  
- # similarity <- exp(-sensitivity*distance)
-  
-#  memory.weighted.similarity <- mapply(function(simi, weight){
- #   return(simi*weight)}, similaritiy, training.data$weight)
-  
-  #probability.target.category <- mapply(function(category, sim){
-   # total.similarity<-0
-  #  sum.target.similarity<-0
-   # if(category == target.category){
-    #  total.similarity = total.similarity+sim
-     # sum.target.similarity = sum.target.similarity + sim
-  #  } else{
-   #   total.similarity = total.similarity+sim
-   # }
-  #}, target.category, memory.weighted.similarity)
-  
-  #return(probability.target.category)
-#}
 
 # Once you have the model implemented, write the log-likelihood function for a set of data.
 # The set of data for the model will look like this:
 
 sample.data.set <- data.frame(x=c(0.5,0.6,0.4,0.5,0.3), y=c(0.4,0.3,0.6,0.4,0.5), 
                               category=c(1,2,2,1,2), correct=c(T,F,F,T,F))
+
+example.probability <- exemplar.memory.limited(sample.data.set, 0.5, 0.4, 1, 0.5, 0.8)
 
 # In our hypothetical experiment, we are training and testing at the same time. This is important
 # for a model like this, because the model depends on the order in which examples are shown.
@@ -113,29 +79,29 @@ sample.data.set[4,]
 
 exemplar.memory.log.likelihood <- function(all.data, sensitivity, decay.rate){
   sum.log <- 0
-  for(i in all.data){
-    if(i==0){
-      sum.log = sum.log + 0
-    }else if(i==1){
+  for(i in 1:nrow(all.data)){
+    if(i==1){
       sum.log = sum.log + log(0.5)
     }else{
     test.point.x <- all.data[i,]$x
-    test.point.y <- all.data[i]$y
-    training.data <- all.data[1:(i-1)]
-    cat <-all.data[i]$category
-    response <- all.data[i]$correct
-    prob<- exemplar.memory.limited(training.data, test.point.x, test.point.y, cat, 
+    test.point.y <- all.data[i,]$y
+    cat <-all.data[i,]$category
+    response <- all.data[i,]$correct
+    training.data <- all.data[1:(i-1),]
+    prob <- exemplar.memory.limited(training.data, test.point.x, test.point.y, cat, 
                                    sensitivity, decay.rate)
     
-    individual.likelihood <- function(response, probability){
-      if(response == T){
-      return(prob)
+    individual.likelihood <- function(resp, probability){
+      if(resp == T){
+      return(probability)
     }else{
-      return(1-prob)
+      return(1-probability)
     }
  }
-    sum.log = sum.log + log(individual.likelihood)
-  }}
-  return(sum.log)
+    sum.log = sum.log + log(individual.likelihood(response, prob))
+    }
+    }
+  return(-sum.log)
 }
+
 exemplar.memory.log.likelihood(sample.data.set, 0.5, 0.8)
